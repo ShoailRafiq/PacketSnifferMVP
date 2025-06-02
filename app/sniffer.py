@@ -55,3 +55,11 @@ class Sniffer:
         self._stop.clear()  # reset the stop flag
         self._thread = Thread(target=self._run, daemon=True)
         self._thread.start()
+
+    def stop(self):
+        """
+        Tells the sniffer to stop by setting the stop flag.
+        The capture loop will notice this flag and finish up cleanly.
+        The GUI will call this whenever the user clicks Stop.
+        """
+        self._stop.set()
