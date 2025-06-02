@@ -55,4 +55,3 @@ class Sniffer:
         self._stop.clear()  # reset the stop flag
         self._thread = Thread(target=self._run, daemon=True)
         self._thread.start()
-
