@@ -42,3 +42,17 @@ class Sniffer:
         self._stop = Event()
         self._thread: Optional[Thread] = None
 
+    def start(self):
+        """
+        Starts a background thread that runs scapy.sniff().
+        If one is already running, we quietly ignore it.
+        This stops the GUI from crashing if someone double-clicks Start.
+        """
+        if self._thread and self._thread.is_alive():
+            # Already running — nothing more to do
+            return
+
+        self._stop.clear()  # reset the stop flag
+        self._thread = Thread(target=self._run, daemon=True)
+        self._thread.start()
+
