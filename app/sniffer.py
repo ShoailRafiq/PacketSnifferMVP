@@ -63,3 +63,24 @@ class Sniffer:
         The GUI will call this whenever the user clicks Stop.
         """
         self._stop.set()
+
+    def _run(self):
+        """
+        Internal worker that scapy.sniff() runs inside a thread.
+        We don’t call this directly — it’s only used by start().
+        """
+        try:
+            sniff(
+                iface=self.iface,             # which interface we listen on
+                filter=self.bpf,              # optional BPF filter, or None
+                prn=self._handle_packet,      # callback for each packet
+                stop_filter=lambda p: self._stop.is_set(),  # quits if stop flag is set
+                store=False                   # don’t keep packets in memory, saves RAM
+            )
+        except Exception as e:
+            # If something goes wrong, we still surface it as a row
+            self.on_row([
+                self._ts(), "—", "—", "ERROR", 0,
+                f"{type(e).__name__}: {e}"
+            ])
+
