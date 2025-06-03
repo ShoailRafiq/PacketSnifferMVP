@@ -1,50 +1,48 @@
 """
-Quick test harness for the Sniffer.
-Run this file directly to see if packets are being captured.
+Quick test harness for the Packet Sniffer MVP.
+Pick which test to run by toggling at the bottom.
 """
 
 from app.sniffer import Sniffer
+from app.scanner import quick_scan
 
 
-def print_row(row: list):
+def run_sniffer_test():
     """
-    Simple callback to show rows in the terminal.
-    Row format: [timestamp, src, dst, proto, length, info]
+    Test harness for the Sniffer.
+    Captures packets and prints them to the console.
     """
-    print(row)
+    def print_row(row: list):
+        print(row)
 
-
-if __name__ == "__main__":
-    # Choose which interface to listen on.
-    # Loopback is reliable for quick tests with localhost traffic.
     iface = r"\Device\NPF_Loopback"
-
-    # BPF filter options (pick ONE and comment the rest):
-    # bpf_filter = ""              # everything
-    # bpf_filter = "icmp"          # only ping/ICMP
-    # bpf_filter = "tcp"           # only TCP
-    # bpf_filter = "udp"           # only UDP
-    # bpf_filter = "port 53"       # only DNS
-    # bpf_filter = "host 127.0.0.1"  # only loopback host
-    bpf_filter = "icmp"  # ← example: only ICMP for ping tests
+    bpf_filter = "icmp"   # change this if you want TCP/UDP/DNS
 
     sniffer = Sniffer(iface=iface, bpf_filter=bpf_filter, on_row=print_row)
-
     print("Starting sniffer... Press Ctrl+C to stop.")
     sniffer.start()
-
     try:
-        # Just idle here while packets are captured
         while True:
             pass
     except KeyboardInterrupt:
         print("Stopping sniffer...")
         sniffer.stop()
 
-if __name__ == "__main__":
-    from app.scanner import quick_scan
+
+def run_scanner_test():
+    """
+    Test harness for the Scanner.
+    Runs a quick scan of localhost and prints open ports.
+    """
     print("Running quick scan of localhost (top ports)…")
     res = quick_scan("127.0.0.1", "top-100")
     for host, data in res.items():
         opens = [str(p) for p, st in data.get("tcp", {}).items() if st == "open"]
         print(f"{host} [{data.get('state','?')}] open: {', '.join(opens) or '—'}")
+
+
+if __name__ == "__main__":
+    # Pick ONE to run for now
+    run_sniffer_test()
+    # run_scanner_test()
+
