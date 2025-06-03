@@ -94,4 +94,10 @@ class Sniffer:
         proto = "OTHER"        # default if we can’t match anything
         src, dst, info = "?", "?", pkt.summary()  # placeholders for now
 
+        # If this is an IP packet we can dig deeper
+        if IP in pkt:
+            ip = pkt[IP]
+            src, dst = ip.src, ip.dst
+
+
 
