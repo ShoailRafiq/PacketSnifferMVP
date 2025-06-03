@@ -84,3 +84,14 @@ class Sniffer:
                 f"{type(e).__name__}: {e}"
             ])
 
+    def _handle_packet(self, pkt: Packet):
+        """
+        Turn a raw scapy packet into a tidy row for the GUI or CSV.
+        Row format: [timestamp, src, dst, proto, length, info]
+        """
+        ts = self._ts()        # current time in a neat string
+        length = len(pkt)      # packet size in bytes
+        proto = "OTHER"        # default if we can’t match anything
+        src, dst, info = "?", "?", pkt.summary()  # placeholders for now
+
+
