@@ -15,9 +15,18 @@ def print_row(row: list):
 
 
 if __name__ == "__main__":
-    # Use the Npcap loopback adapter for a safe test
+    # Choose which interface to listen on.
+    # Loopback is reliable for quick tests with localhost traffic.
     iface = r"\Device\NPF_Loopback"
-    bpf_filter = ""  # no filter, capture everything
+
+    # BPF filter options (pick ONE and comment the rest):
+    # bpf_filter = ""              # everything
+    # bpf_filter = "icmp"          # only ping/ICMP
+    # bpf_filter = "tcp"           # only TCP
+    # bpf_filter = "udp"           # only UDP
+    # bpf_filter = "port 53"       # only DNS
+    # bpf_filter = "host 127.0.0.1"  # only loopback host
+    bpf_filter = "icmp"  # ← example: only ICMP for ping tests
 
     sniffer = Sniffer(iface=iface, bpf_filter=bpf_filter, on_row=print_row)
 
