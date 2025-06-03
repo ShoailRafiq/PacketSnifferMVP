@@ -108,6 +108,14 @@ class Sniffer:
         else:
             proto = "IP"
 
+        else:
+            # Non-IP frame (eg ARP or other link layer traffic)
+            proto = pkt.name or "RAW"
+
+        # Send the final row back up to the GUI/caller
+        self.on_row([ts, src, dst, proto, length, info])
+
+
 
 
 
