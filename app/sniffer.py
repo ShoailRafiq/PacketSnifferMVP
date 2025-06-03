@@ -99,14 +99,14 @@ class Sniffer:
             ip = pkt[IP]
             src, dst = ip.src, ip.dst
 
-        if TCP in pkt:
-            proto = "TCP"
-        elif UDP in pkt:
-            proto = "UDP"
-        elif ICMP in pkt:
-            proto = "ICMP"
-        else:
-            proto = "IP"
+            if TCP in pkt:
+                proto = "TCP"
+            elif UDP in pkt:
+                proto = "UDP"
+            elif ICMP in pkt:
+                proto = "ICMP"
+            else:
+                proto = "IP"
 
         else:
             # Non-IP frame (eg ARP or other link layer traffic)
