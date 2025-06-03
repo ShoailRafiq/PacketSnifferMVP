@@ -115,6 +115,13 @@ class Sniffer:
         # Send the final row back up to the GUI/caller
         self.on_row([ts, src, dst, proto, length, info])
 
+    def _ts(self) -> str:
+        """
+        Return a timestamp string for when a packet was seen.
+        Format: YYYY-MM-DD HH:MM:SS
+        """
+        return datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
 
 
 
