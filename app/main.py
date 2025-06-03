@@ -40,3 +40,11 @@ if __name__ == "__main__":
     except KeyboardInterrupt:
         print("Stopping sniffer...")
         sniffer.stop()
+
+if __name__ == "__main__":
+    from app.scanner import quick_scan
+    print("Running quick scan of localhost (top ports)…")
+    res = quick_scan("127.0.0.1", "top-100")
+    for host, data in res.items():
+        opens = [str(p) for p, st in data.get("tcp", {}).items() if st == "open"]
+        print(f"{host} [{data.get('state','?')}] open: {', '.join(opens) or '—'}")
