@@ -62,4 +62,19 @@ if __name__ == "__main__":
     else:
         run_scanner_test()
 
+# --------------------------------------------------------------------
+# HOW TO USE THIS FILE (for students / new users):
+#
+# You can run this module from the project root with:
+#
+#   python -m app.main sniffer
+#       → starts the Sniffer harness
+#         (press Ctrl+C to stop, then try ping or curl.exe to generate traffic)
+#
+#   python -m app.main scanner
+#       → runs the Scanner harness
+#         (performs a quick Nmap scan of localhost and shows open ports)
+#
+# Default mode is "sniffer" if no argument is given.
+# --------------------------------------------------------------------
 
