@@ -77,5 +77,17 @@ class PacketDB:
         )
         self._conn.commit()
 
+    def fetch_recent(self, limit: int = 100) -> list:
+        """
+        Return the most recent 'limit' packet rows.
+        Useful for a quick sanity-check or exporting a subset.
+        """
+        cur = self._conn.execute(
+            "SELECT ts, src, dst, proto, length, info "
+            "FROM packets ORDER BY rowid DESC LIMIT ?",
+            (int(limit),)
+        )
+        return cur.fetchall()
+
 
 
