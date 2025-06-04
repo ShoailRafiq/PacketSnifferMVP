@@ -32,5 +32,36 @@ def export_rows_to_csv(rows: List[List], path: str):
             r = (list(r) + ["", "", "", "", "", ""])[:6]
             w.writerow(r)
 
+class PacketDB:
+    """
+    Tiny SQLite wrapper for saving packets.
+    Not essential for MVP but handy if we want persistent logs.
+
+    Table layout:
+    packets(
+        ts TEXT,
+        src TEXT,
+        dst TEXT,
+        proto TEXT,
+        length INT,
+        info TEXT
+    )
+    """
+
+    def __init__(self, db_path: str = "packets.db"):
+        self.db_path = db_path
+        self._conn = sqlite3.connect(self.db_path)
+        self._conn.execute(
+            """CREATE TABLE IF NOT EXISTS packets (
+                ts TEXT,
+                src TEXT,
+                dst TEXT,
+                proto TEXT,
+                length INT,
+                info TEXT
+            )"""
+        )
+        self._conn.commit()
+
 
 
