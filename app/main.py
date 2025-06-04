@@ -42,7 +42,24 @@ def run_scanner_test():
 
 
 if __name__ == "__main__":
-    # Pick ONE to run for now
-    run_sniffer_test()
-    # run_scanner_test()
+    import sys
+    mode = "sniffer"  # default
+
+    # allow calling: python -m app.main sniffer  OR python -m app.main scanner
+    if len(sys.argv) > 1:
+        arg = sys.argv[1].lower()
+        if arg in ("sniffer", "s"):
+            mode = "sniffer"
+        elif arg in ("scanner", "scan", "nmap"):
+            mode = "scanner"
+        else:
+            print("Unknown mode:", arg)
+            print("Usage: python -m app.main [sniffer|scanner]")
+            sys.exit(1)
+
+    if mode == "sniffer":
+        run_sniffer_test()
+    else:
+        run_scanner_test()
+
 
