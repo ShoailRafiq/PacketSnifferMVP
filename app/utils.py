@@ -63,5 +63,19 @@ class PacketDB:
         )
         self._conn.commit()
 
+    def insert_row(self, row: list):
+        """
+        Insert a single packet row into the database.
+        Row format must be [ts, src, dst, proto, length, info].
+        """
+        if not row or len(row) < 6:
+            return  # ignore malformed rows
+
+        self._conn.execute(
+            "INSERT INTO packets (ts, src, dst, proto, length, info) VALUES (?, ?, ?, ?, ?, ?)",
+            row[:6]
+        )
+        self._conn.commit()
+
 
 
