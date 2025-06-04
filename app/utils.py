@@ -89,5 +89,14 @@ class PacketDB:
         )
         return cur.fetchall()
 
+    def close(self):
+        """
+        Close the SQLite connection cleanly.
+        Call this when you’re finished with the database.
+        """
+        if self._conn:
+            self._conn.close()
+            self._conn = None
+
 
 
