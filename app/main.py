@@ -11,9 +11,14 @@ def run_sniffer_test():
     """
     Test harness for the Sniffer.
     Captures packets and prints them to the console.
+    Later: export to CSV on exit.
     """
+
+    rows = []  # store rows in memory for export later
+
     def print_row(row: list):
         print(row)
+        rows.append(row)  # also keep it for exporting
 
     iface = r"\Device\NPF_Loopback"
     bpf_filter = "icmp"   # change this if you want TCP/UDP/DNS
@@ -24,9 +29,19 @@ def run_sniffer_test():
     try:
         while True:
             pass
-    except KeyboardInterrupt:
-        print("Stopping sniffer...")
-        sniffer.stop()
+            except KeyboardInterrupt:
+            print("Stopping sniffer...")
+            sniffer.stop()
+            # ---- Export on exit ----
+            from datetime import datetime
+            from app.utils import export_rows_to_csv
+            ts = datetime.now().strftime("%Y%m%d_%H%M%S")
+            out_path = f"evidence/capture_{ts}.csv"
+            try:
+                export_rows_to_csv(rows, out_path)
+                print(f"Saved {len(rows)} rows to {out_path}")
+            except Exception as e:
+                print("Export failed:", e)
 
 
 def run_scanner_test():
