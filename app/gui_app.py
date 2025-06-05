@@ -1,7 +1,10 @@
 # app/gui_app.py
 """
-GUI with Home + Packet Capture + Port Scanner.
-Scanner: target input, big Start Scan, 2-column results (IP | open ports), Save/Export.
+GUI complete for MVP:
+- Home (stacked tiles)
+- Packet Capture (Start/Stop, table, Save/Export)
+- Port Scanner (target, Start Scan, results, Save/Export)
+- Settings (consent toggle, export all sessions, reset)
 """
 
 import tkinter as tk
@@ -29,13 +32,13 @@ class App(tk.Tk):
 
         self.sniffer: Optional[Sniffer] = None
         self.capture_rows: List[List] = []
-        self.scan_rows: List[List] = []  # raw rows: [host, state, proto, port, status]
+        self.scan_rows: List[List] = []
 
         self.container = ttk.Frame(self)
         self.container.pack(fill=tk.BOTH, expand=True)
 
         self.screens = {}
-        for Screen in (HomeScreen, CaptureScreen, ScannerScreen):
+        for Screen in (HomeScreen, CaptureScreen, ScannerScreen, SettingsScreen):
             frame = Screen(self.container, self)
             self.screens[Screen.__name__] = frame
             frame.grid(row=0, column=0, sticky="nsew")
@@ -43,6 +46,7 @@ class App(tk.Tk):
         self.show("HomeScreen")
         self.after(250, self.prompt_consent_if_needed)
 
+    # ---------- base ----------
     def _init_styles(self):
         style = ttk.Style(self)
         style.configure(".", font=("Segoe UI", 11))
@@ -57,22 +61,24 @@ class App(tk.Tk):
         nav.add_command(label="Home", command=lambda: self.show("HomeScreen"))
         nav.add_command(label="Packet Capture", command=lambda: self.show("CaptureScreen"))
         nav.add_command(label="Port Scanner", command=lambda: self.show("ScannerScreen"))
+        nav.add_command(label="Settings", command=lambda: self.show("SettingsScreen"))
         m.add_cascade(label="Navigate", menu=nav)
         self.config(menu=m)
 
     def show(self, name: str):
         self.screens[name].tkraise()
 
+    # ---------- consent ----------
     def prompt_consent_if_needed(self):
         if not self.user_consented:
             ok = messagebox.askyesno(
                 "Consent required",
                 "This educational tool captures network metadata and runs basic port scans.\n"
-                "No payloads are stored. Proceed?"
+                "Payloads are not stored. Do you consent to proceed?"
             )
             self.user_consented = bool(ok)
 
-    # ----- capture helpers -----
+    # ---------- capture ----------
     def start_capture(self, iface: str, bpf: str, on_row_cb):
         if not self.user_consented:
             messagebox.showwarning("Consent required", "Enable consent to start capturing.")
@@ -94,7 +100,7 @@ class App(tk.Tk):
             self.sniffer.stop()
             self.sniffer = None
 
-    # ----- scan helper -----
+    # ---------- scanning ----------
     def run_quick_scan(self, target: str, ports: str) -> List[List]:
         if not self.user_consented:
             messagebox.showwarning("Consent required", "Enable consent to run scans.")
@@ -112,12 +118,11 @@ class App(tk.Tk):
         return rows
 
 
-# -------------------- Home (unchanged) --------------------
+# -------------------- Home --------------------
 class HomeScreen(ttk.Frame):
     def __init__(self, parent, app: App):
         super().__init__(parent)
         self.app = app
-
         shell = ttk.Frame(self, padding=32)
         shell.pack(fill=tk.BOTH, expand=True)
         header = ttk.Frame(shell, padding=16, relief=tk.GROOVE)
@@ -134,12 +139,12 @@ class HomeScreen(ttk.Frame):
             return b
 
         tile("Start Packet Capture", lambda: app.show("CaptureScreen"))
-        tile("Port Scanner", lambda: app.show("ScannerScreen"))
-        tile("View Logs", lambda: messagebox.showinfo("View Logs", "Planned for CS302."))
-        tile("Settings", lambda: messagebox.showinfo("Settings", "Coming soon."))
+        tile("Port Scanner",        lambda: app.show("ScannerScreen"))
+        tile("View Logs",           lambda: messagebox.showinfo("View Logs", "Planned for CS302."))
+        tile("Settings",            lambda: app.show("SettingsScreen"))
 
 
-# -------------------- Packet Capture (unchanged) --------------------
+# -------------------- Packet Capture --------------------
 class CaptureScreen(ttk.Frame):
     def __init__(self, parent, app: App):
         super().__init__(parent, padding=20)
@@ -162,8 +167,8 @@ class CaptureScreen(ttk.Frame):
         ttk.Entry(ctrl, textvariable=self.filter_var, width=20).pack(side=tk.LEFT, padx=(6, 16))
 
         self.btn_start = ttk.Button(ctrl, text="Start Capture", style="Big.TButton", command=self.on_start)
-        self.btn_stop = ttk.Button(ctrl, text="Stop Capture", style="Big.TButton",
-                                   command=self.on_stop, state=tk.DISABLED)
+        self.btn_stop  = ttk.Button(ctrl, text="Stop Capture",  style="Big.TButton",
+                                    command=self.on_stop, state=tk.DISABLED)
         self.btn_start.pack(side=tk.LEFT, padx=8)
         self.btn_stop.pack(side=tk.LEFT, padx=8)
 
@@ -179,8 +184,8 @@ class CaptureScreen(ttk.Frame):
 
         bottom = ttk.Frame(self)
         bottom.pack(fill=tk.X, pady=(10, 0))
-        self.btn_save = ttk.Button(bottom, text="Save Session", style="Big.TButton",
-                                   command=self.on_save, state=tk.DISABLED)
+        self.btn_save   = ttk.Button(bottom, text="Save Session", style="Big.TButton",
+                                     command=self.on_save, state=tk.DISABLED)
         self.btn_export = ttk.Button(bottom, text="Export to File", style="Big.TButton",
                                      command=self.on_export, state=tk.DISABLED)
         self.btn_save.pack(side=tk.LEFT, padx=8)
@@ -192,7 +197,6 @@ class CaptureScreen(ttk.Frame):
         self._populate_interfaces()
 
     def _populate_interfaces(self):
-        from scapy.all import get_if_list
         ifs = get_if_list()
         self.if_combo["values"] = ifs
         default = next((i for i in ifs if "NPF_Loopback" in i), (ifs[0] if ifs else ""))
@@ -271,7 +275,7 @@ class ScannerScreen(ttk.Frame):
         self.target_var = tk.StringVar(value="127.0.0.1")
         ttk.Entry(row, textvariable=self.target_var, width=36).pack(side=tk.LEFT, padx=(12, 24))
 
-        ttk.Button(self, text="Start Scan", style="Big.TButton", command=self.on_scan) \
+        ttk.Button(self, text="Start Scan", style="Big.TButton", command=self.on_scan)\
             .pack(anchor="w", pady=(0, 8))
 
         cols = ("host", "open_ports")
@@ -284,8 +288,8 @@ class ScannerScreen(ttk.Frame):
 
         bottom = ttk.Frame(self)
         bottom.pack(fill=tk.X, pady=(10, 0))
-        self.btn_save = ttk.Button(bottom, text="Save Results", style="Big.TButton",
-                                   command=self.on_save, state=tk.DISABLED)
+        self.btn_save   = ttk.Button(bottom, text="Save Results",  style="Big.TButton",
+                                     command=self.on_save, state=tk.DISABLED)
         self.btn_export = ttk.Button(bottom, text="Export Report", style="Big.TButton",
                                      command=self.on_export, state=tk.DISABLED)
         self.btn_save.pack(side=tk.LEFT, padx=8)
@@ -332,6 +336,68 @@ class ScannerScreen(ttk.Frame):
         Path("evidence").mkdir(exist_ok=True)
         export_rows_to_csv(self.app.scan_rows, f"evidence/scan_{ts}.csv")
         messagebox.showinfo("Saved", "Scan rows saved into evidence/")
+
+
+# -------------------- Settings --------------------
+class SettingsScreen(ttk.Frame):
+    def __init__(self, parent, app: App):
+        super().__init__(parent, padding=24)
+        self.app = app
+
+        top = ttk.Frame(self, padding=16, relief=tk.GROOVE)
+        top.pack(fill=tk.X)
+        ttk.Button(top, text="← Home", command=lambda: app.show("HomeScreen")).pack(side=tk.LEFT)
+        ttk.Label(top, text="Settings", style="SectionTitle.TLabel").pack(side=tk.LEFT, padx=12)
+        ttk.Label(top, text="●", font=("Segoe UI", 24)).pack(side=tk.RIGHT)
+
+        body = ttk.Frame(self)
+        body.pack(fill=tk.BOTH, expand=True, pady=16)
+
+        # consent toggle
+        self.consent_var = tk.BooleanVar(value=app.user_consented)
+        c1 = ttk.Checkbutton(
+            body,
+            text="Enable consent prompts (required for capture & scan)",
+            variable=self.consent_var,
+            command=self.on_toggle_consent
+        )
+        c1.pack(fill=tk.X, pady=8, ipady=8)
+
+        # filter settings (info only for MVP)
+        ttk.Button(body, text="Packet Capture Filter Settings", style="Tile.TButton",
+                   command=self.edit_filters).pack(fill=tk.X, pady=8, ipady=10)
+
+        # export all sessions (current runtime only for MVP)
+        ttk.Button(body, text="Export All Sessions", style="Tile.TButton",
+                   command=self.export_all).pack(fill=tk.X, pady=8, ipady=10)
+
+        # reset defaults
+        ttk.Button(body, text="Reset to Default Settings", style="Tile.TButton",
+                   command=self.reset_defaults).pack(fill=tk.X, pady=8, ipady=10)
+
+    def on_toggle_consent(self):
+        self.app.user_consented = bool(self.consent_var.get())
+
+    def edit_filters(self):
+        messagebox.showinfo(
+            "Filters",
+            "Enter BPF filters on the Packet Capture screen (e.g., icmp, tcp, udp, port 53).\n"
+            "Presets and profiles planned for CS302."
+        )
+
+    def export_all(self):
+        Path("evidence").mkdir(exist_ok=True)
+        ts = datetime.now().strftime("%Y%m%d_%H%M%S")
+        if self.app.capture_rows:
+            export_rows_to_csv(self.app.capture_rows, f"evidence/all_captures_{ts}.csv")
+        if self.app.scan_rows:
+            export_rows_to_csv(self.app.scan_rows, f"evidence/all_scans_{ts}.csv")
+        messagebox.showinfo("Exported", "Saved available sessions into evidence/")
+
+    def reset_defaults(self):
+        self.app.user_consented = False
+        self.consent_var.set(False)
+        messagebox.showinfo("Reset", "Settings reset. Consent disabled.")
 
 
 def main():
