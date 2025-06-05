@@ -28,7 +28,7 @@ class Sniffer:
 
     def __init__(self, iface: str, bpf_filter: str, on_row: Callable[[list], None]):
         """
-        :param iface: The Npcap interface name, e.g. r"\\Device\\NPF_Loopback" or a Wi-Fi NPF GUID.
+        :param iface: The Npcap interface name, e.g. "\\Device\\NPF_Loopback" or a Wi-Fi NPF GUID.
         :param bpf_filter: A Berkeley Packet Filter string, e.g. "tcp or udp" or "port 53".
                            Empty string is fine — we’ll treat it as no filter.
         :param on_row: A callback function that takes one list row:
