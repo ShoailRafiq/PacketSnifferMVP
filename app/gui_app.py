@@ -17,6 +17,9 @@ from scapy.all import get_if_list
 from app.sniffer import Sniffer
 from app.utils import export_rows_to_csv
 from app.scanner import quick_scan
+from ctypes import ArgumentError  # type: ignore[attr-defined]
+
+
 
 
 class App(tk.Tk):
@@ -35,7 +38,7 @@ class App(tk.Tk):
         self.scan_rows: List[List] = []
 
         self.container = ttk.Frame(self)
-        self.container.pack(fill=tk.BOTH, expand=True)
+        self.container.pack(fill=tk.BOTH, expand=True) # type: ignore[arg-type]
 
         self.screens = {}
         for Screen in (HomeScreen, CaptureScreen, ScannerScreen, SettingsScreen):
@@ -44,7 +47,7 @@ class App(tk.Tk):
             frame.grid(row=0, column=0, sticky="nsew")
 
         self.show("HomeScreen")
-        self.after(250, self.prompt_consent_if_needed)
+        self.after(250, self.prompt_consent_if_needed) # type: ignore[arg-type]
         self.protocol("WM_DELETE_WINDOW", self._on_close)
 
     # ---------- base ----------
@@ -72,7 +75,7 @@ class App(tk.Tk):
     def _on_close(self):
         try:
             self.stop_capture()
-        except Exception:
+        except (OSError, RuntimeError):
             pass
         self.destroy()
 
@@ -135,18 +138,18 @@ class HomeScreen(ttk.Frame):
         super().__init__(parent)
         self.app = app
         shell = ttk.Frame(self, padding=32)
-        shell.pack(fill=tk.BOTH, expand=True)
-        header = ttk.Frame(shell, padding=16, relief=tk.GROOVE)
-        header.pack(fill=tk.X, pady=(0, 20))
-        ttk.Label(header, text="Network Sniffer", style="SectionTitle.TLabel").pack(side=tk.LEFT)
-        ttk.Label(header, text="●", font=("Segoe UI", 28)).pack(side=tk.RIGHT)
+        shell.pack(fill=tk.BOTH, expand=True) # type: ignore[arg-type]
+        header = ttk.Frame(shell, padding=16, relief=tk.GROOVE) # type: ignore[arg-type]
+        header.pack(fill=tk.X, pady=(0, 20)) # type: ignore[arg-type]
+        ttk.Label(header, text="Network Sniffer", style="SectionTitle.TLabel").pack(side=tk.LEFT) # type: ignore[arg-type]
+        ttk.Label(header, text="●", font=("Segoe UI", 28)).pack(side=tk.RIGHT) # type: ignore[arg-type]
 
         tiles = ttk.Frame(shell)
-        tiles.pack(fill=tk.X, pady=8)
+        tiles.pack(fill=tk.X, pady=8) # type: ignore[arg-type]
 
         def tile(text, cmd):
             b = ttk.Button(tiles, text=text, command=cmd, style="Tile.TButton")
-            b.pack(fill=tk.X, pady=10, ipady=10)
+            b.pack(fill=tk.X, pady=10, ipady=10) # type: ignore[arg-type]
             return b
 
         tile("Start Packet Capture", lambda: app.show("CaptureScreen"))
@@ -161,47 +164,47 @@ class CaptureScreen(ttk.Frame):
         super().__init__(parent, padding=20)
         self.app = app
 
-        top = ttk.Frame(self, padding=16, relief=tk.GROOVE)
-        top.pack(fill=tk.X)
-        ttk.Button(top, text="← Home", command=lambda: app.show("HomeScreen")).pack(side=tk.LEFT)
-        ttk.Label(top, text="Packet Capture", style="SectionTitle.TLabel").pack(side=tk.LEFT, padx=12)
-        ttk.Label(top, text="●", font=("Segoe UI", 26)).pack(side=tk.RIGHT)
+        top = ttk.Frame(self, padding=16, relief=tk.GROOVE) # type: ignore[arg-type]
+        top.pack(fill=tk.X) # type: ignore[arg-type]
+        ttk.Button(top, text="← Home", command=lambda: app.show("HomeScreen")).pack(side=tk.LEFT) # type: ignore[arg-type]
+        ttk.Label(top, text="Packet Capture", style="SectionTitle.TLabel").pack(side=tk.LEFT, padx=12) # type: ignore[arg-type]
+        ttk.Label(top, text="●", font=("Segoe UI", 26)).pack(side=tk.RIGHT) # type: ignore[arg-type]
 
         ctrl = ttk.Frame(self)
-        ctrl.pack(fill=tk.X, pady=16)
+        ctrl.pack(fill=tk.X, pady=16) # type: ignore[arg-type]
         self.if_var = tk.StringVar()
         self.filter_var = tk.StringVar(value="")
-        ttk.Label(ctrl, text="Interface:").pack(side=tk.LEFT)
+        ttk.Label(ctrl, text="Interface:").pack(side=tk.LEFT) # type: ignore[arg-type]
         self.if_combo = ttk.Combobox(ctrl, textvariable=self.if_var, width=48, state="readonly")
-        self.if_combo.pack(side=tk.LEFT, padx=(6, 16))
-        ttk.Label(ctrl, text="Filter:").pack(side=tk.LEFT)
-        ttk.Entry(ctrl, textvariable=self.filter_var, width=20).pack(side=tk.LEFT, padx=(6, 16))
+        self.if_combo.pack(side=tk.LEFT, padx=(6, 16)) # type: ignore[arg-type]
+        ttk.Label(ctrl, text="Filter:").pack(side=tk.LEFT) # type: ignore[arg-type]
+        ttk.Entry(ctrl, textvariable=self.filter_var, width=20).pack(side=tk.LEFT, padx=(6, 16)) # type: ignore[arg-type]
 
         self.btn_start = ttk.Button(ctrl, text="Start Capture", style="Big.TButton", command=self.on_start)
         self.btn_stop  = ttk.Button(ctrl, text="Stop Capture",  style="Big.TButton",
                                     command=self.on_stop, state=tk.DISABLED)
-        self.btn_start.pack(side=tk.LEFT, padx=8)
-        self.btn_stop.pack(side=tk.LEFT, padx=8)
+        self.btn_start.pack(side=tk.LEFT, padx=8) # type: ignore[arg-type]
+        self.btn_stop.pack(side=tk.LEFT, padx=8) # type: ignore[arg-type]
 
         cols = ("timestamp", "src", "dst", "proto", "length", "info")
         self.tree = ttk.Treeview(self, columns=cols, show="headings", height=16)
         for c in cols:
             self.tree.heading(c, text=c)
-            self.tree.column(c, width=140 if c != "info" else 320, anchor=tk.W)
-        self.tree.pack(fill=tk.BOTH, expand=True, pady=6)
+            self.tree.column(c, width=140 if c != "info" else 320, anchor=tk.W) # type: ignore[arg-type]
+        self.tree.pack(fill=tk.BOTH, expand=True, pady=6) # type: ignore[arg-type]
         yscroll = ttk.Scrollbar(self, orient="vertical", command=self.tree.yview)
         self.tree.configure(yscrollcommand=yscroll.set)
-        yscroll.pack(side=tk.RIGHT, fill=tk.Y)
+        yscroll.pack(side=tk.RIGHT, fill=tk.Y) # type: ignore[arg-type]
 
 
         bottom = ttk.Frame(self)
-        bottom.pack(fill=tk.X, pady=(10, 0))
+        bottom.pack(fill=tk.X, pady=(10, 0)) # type: ignore[arg-type]
         self.btn_save   = ttk.Button(bottom, text="Save Session", style="Big.TButton",
                                      command=self.on_save, state=tk.DISABLED)
         self.btn_export = ttk.Button(bottom, text="Export to File", style="Big.TButton",
                                      command=self.on_export, state=tk.DISABLED)
-        self.btn_save.pack(side=tk.LEFT, padx=8)
-        self.btn_export.pack(side=tk.RIGHT, padx=8)
+        self.btn_save.pack(side=tk.LEFT, padx=8) # type: ignore[arg-type]
+        self.btn_export.pack(side=tk.RIGHT, padx=8) # type: ignore[arg-type]
 
         self.status_var = tk.StringVar(value="Ready")
         ttk.Label(self, textvariable=self.status_var).pack(anchor="w", pady=(8, 0))
@@ -216,7 +219,7 @@ class CaptureScreen(ttk.Frame):
 
     def _append_row_ui(self, row: List):
         self.app.capture_rows.append(row)
-        self.tree.insert("", tk.END, values=row)
+        self.tree.insert("", tk.END, values=row) # type: ignore[arg-type]
         self.status_var.set(f"Rows captured: {len(self.app.capture_rows)}")
 
     def append_row(self, row: List):
@@ -285,17 +288,17 @@ class ScannerScreen(ttk.Frame):
         super().__init__(parent, padding=20)
         self.app = app
 
-        top = ttk.Frame(self, padding=16, relief=tk.GROOVE)
-        top.pack(fill=tk.X)
-        ttk.Button(top, text="← Home", command=lambda: app.show("HomeScreen")).pack(side=tk.LEFT)
-        ttk.Label(top, text="Port Scanner", style="SectionTitle.TLabel").pack(side=tk.LEFT, padx=12)
-        ttk.Label(top, text="●", font=("Segoe UI", 26)).pack(side=tk.RIGHT)
+        top = ttk.Frame(self, padding=16, relief=tk.GROOVE) # type: ignore[arg-type]
+        top.pack(fill=tk.X) # type: ignore[arg-type]
+        ttk.Button(top, text="← Home", command=lambda: app.show("HomeScreen")).pack(side=tk.LEFT) # type: ignore[arg-type]
+        ttk.Label(top, text="Port Scanner", style="SectionTitle.TLabel").pack(side=tk.LEFT, padx=12) # type: ignore[arg-type]
+        ttk.Label(top, text="●", font=("Segoe UI", 26)).pack(side=tk.RIGHT) # type: ignore[arg-type]
 
         row = ttk.Frame(self)
-        row.pack(fill=tk.X, pady=14)
-        ttk.Label(row, text="Enter Target IP").pack(side=tk.LEFT)
+        row.pack(fill=tk.X, pady=14) # type: ignore[arg-type]
+        ttk.Label(row, text="Enter Target IP").pack(side=tk.LEFT) # type: ignore[arg-type]
         self.target_var = tk.StringVar(value="127.0.0.1")
-        ttk.Entry(row, textvariable=self.target_var, width=36).pack(side=tk.LEFT, padx=(12, 24))
+        ttk.Entry(row, textvariable=self.target_var, width=36).pack(side=tk.LEFT, padx=(12, 24)) # type: ignore[arg-type]
 
         ttk.Button(self, text="Start Scan", style="Big.TButton", command=self.on_scan)\
             .pack(anchor="w", pady=(0, 8))
@@ -304,18 +307,18 @@ class ScannerScreen(ttk.Frame):
         self.tree = ttk.Treeview(self, columns=cols, show="headings", height=16)
         self.tree.heading("host", text="IP Address")
         self.tree.heading("open_ports", text="Open Ports")
-        self.tree.column("host", width=260, anchor=tk.W)
-        self.tree.column("open_ports", width=520, anchor=tk.W)
-        self.tree.pack(fill=tk.BOTH, expand=True, pady=6)
+        self.tree.column("host", width=260, anchor=tk.W) # type: ignore[arg-type]
+        self.tree.column("open_ports", width=520, anchor=tk.W) # type: ignore[arg-type]
+        self.tree.pack(fill=tk.BOTH, expand=True, pady=6) # type: ignore[arg-type]
 
         bottom = ttk.Frame(self)
-        bottom.pack(fill=tk.X, pady=(10, 0))
+        bottom.pack(fill=tk.X, pady=(10, 0)) # type: ignore[arg-type]
         self.btn_save   = ttk.Button(bottom, text="Save Results",  style="Big.TButton",
                                      command=self.on_save, state=tk.DISABLED)
         self.btn_export = ttk.Button(bottom, text="Export Report", style="Big.TButton",
                                      command=self.on_export, state=tk.DISABLED)
-        self.btn_save.pack(side=tk.LEFT, padx=8)
-        self.btn_export.pack(side=tk.RIGHT, padx=8)
+        self.btn_save.pack(side=tk.LEFT, padx=8) # type: ignore[arg-type]
+        self.btn_export.pack(side=tk.RIGHT, padx=8) # type: ignore[arg-type]
 
     def on_scan(self):
         for iid in self.tree.get_children():
@@ -331,7 +334,7 @@ class ScannerScreen(ttk.Frame):
             if status == "open":
                 by_host.setdefault(host, []).append(str(port))
         for host, ports in by_host.items():
-            self.tree.insert("", tk.END, values=[host, ", ".join(ports) or "—"])
+            self.tree.insert("", tk.END, values=[host, ", ".join(ports) or "—"]) # type: ignore[arg-type]
 
         has = any(by_host.values())
         self.btn_save.config(state=(tk.NORMAL if has else tk.DISABLED))
@@ -372,14 +375,14 @@ class SettingsScreen(ttk.Frame):
         super().__init__(parent, padding=24)
         self.app = app
 
-        top = ttk.Frame(self, padding=16, relief=tk.GROOVE)
-        top.pack(fill=tk.X)
-        ttk.Button(top, text="← Home", command=lambda: app.show("HomeScreen")).pack(side=tk.LEFT)
-        ttk.Label(top, text="Settings", style="SectionTitle.TLabel").pack(side=tk.LEFT, padx=12)
-        ttk.Label(top, text="●", font=("Segoe UI", 24)).pack(side=tk.RIGHT)
+        top = ttk.Frame(self, padding=16, relief=tk.GROOVE) # type: ignore[arg-type]
+        top.pack(fill=tk.X) # type: ignore[arg-type]
+        ttk.Button(top, text="← Home", command=lambda: app.show("HomeScreen")).pack(side=tk.LEFT) # type: ignore[arg-type]
+        ttk.Label(top, text="Settings", style="SectionTitle.TLabel").pack(side=tk.LEFT, padx=12) # type: ignore[arg-type]
+        ttk.Label(top, text="●", font=("Segoe UI", 24)).pack(side=tk.RIGHT) # type: ignore[arg-type]
 
         body = ttk.Frame(self)
-        body.pack(fill=tk.BOTH, expand=True, pady=16)
+        body.pack(fill=tk.BOTH, expand=True, pady=16) # type: ignore[arg-type]
 
         # consent toggle
         self.consent_var = tk.BooleanVar(value=app.user_consented)
@@ -389,24 +392,25 @@ class SettingsScreen(ttk.Frame):
             variable=self.consent_var,
             command=self.on_toggle_consent
         )
-        c1.pack(fill=tk.X, pady=8, ipady=8)
+        c1.pack(fill=tk.X, pady=8, ipady=8) # type: ignore[arg-type]
 
         # filter settings (info only for MVP)
         ttk.Button(body, text="Packet Capture Filter Settings", style="Tile.TButton",
-                   command=self.edit_filters).pack(fill=tk.X, pady=8, ipady=10)
+                   command=self.edit_filters).pack(fill=tk.X, pady=8, ipady=10) # type: ignore[arg-type]
 
         # export all sessions (current runtime only for MVP)
         ttk.Button(body, text="Export All Sessions", style="Tile.TButton",
-                   command=self.export_all).pack(fill=tk.X, pady=8, ipady=10)
+                   command=self.export_all).pack(fill=tk.X, pady=8, ipady=10) # type: ignore[arg-type]
 
         # reset defaults
         ttk.Button(body, text="Reset to Default Settings", style="Tile.TButton",
-                   command=self.reset_defaults).pack(fill=tk.X, pady=8, ipady=10)
+                   command=self.reset_defaults).pack(fill=tk.X, pady=8, ipady=10) # type: ignore[arg-type]
 
     def on_toggle_consent(self):
         self.app.user_consented = bool(self.consent_var.get())
 
-    def edit_filters(self):
+    @staticmethod
+    def edit_filters(): # noinspection PyMethodMayBeStatic
         messagebox.showinfo(
             "Filters",
             "Enter BPF filters on the Packet Capture screen (e.g., icmp, tcp, udp, port 53).\n"
@@ -449,10 +453,27 @@ class SettingsScreen(ttk.Frame):
 def main():
     app = App()
     try:
-        from ctypes import windll
-        windll.shcore.SetProcessDpiAwareness(1)
-    except Exception:
-        pass
+        from ctypes import windll  # type: ignore[attr-defined]
+    except ImportError:
+        windll = None  # type: ignore[assignment]
+
+    if windll is not None:
+        # Prefer Win 8.1+ per-monitor DPI awareness
+        shcore = getattr(windll, "shcore", None)
+        if shcore and hasattr(shcore, "SetProcessDpiAwareness"):
+            try:
+                shcore.SetProcessDpiAwareness(1)  # PROCESS_SYSTEM_DPI_AWARE  # type: ignore[attr-defined]
+            except (OSError, AttributeError, ArgumentError):
+                pass
+        else:
+            # Fallback: system DPI awareness (older Windows)
+            user32 = getattr(windll, "user32", None)
+            if user32 and hasattr(user32, "SetProcessDPIAware"):
+                try:
+                    user32.SetProcessDPIAware()  # type: ignore[attr-defined]
+                except (OSError, AttributeError):
+                    pass
+
     app.mainloop()
 
 
