@@ -89,10 +89,10 @@ class Sniffer:
         Turn a raw scapy packet into a tidy row for the GUI or CSV.
         Row format: [timestamp, src, dst, proto, length, info]
         """
-        ts = self._ts()        # current time in a neat string
-        length = len(pkt)      # packet size in bytes
-        proto = "OTHER"        # default if we can’t match anything
-        src, dst, info = "?", "?", pkt.summary()  # placeholders for now
+        ts = self._ts()  # current time in a neat string
+        length = len(pkt)  # packet size in bytes
+        src, dst = "?", "?"
+        info = pkt.summary()
 
         # If this is an IP packet we can dig deeper
         if IP in pkt:
@@ -107,20 +107,21 @@ class Sniffer:
                 proto = "ICMP"
             else:
                 proto = "IP"
-
         else:
-            # Non-IP frame (eg ARP or other link layer traffic)
+            # Non-IP frame (e.g. ARP or other link-layer traffic)
             proto = pkt.name or "RAW"
 
         # Send the final row back up to the GUI/caller
         self.on_row([ts, src, dst, proto, length, info])
 
-    def _ts(self) -> str:
+    @staticmethod
+    def _ts() -> str:
         """
         Return a timestamp string for when a packet was seen.
         Format: YYYY-MM-DD HH:MM:SS
         """
         return datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
 
 
 

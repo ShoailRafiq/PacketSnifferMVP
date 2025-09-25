@@ -45,6 +45,7 @@ class App(tk.Tk):
 
         self.show("HomeScreen")
         self.after(250, self.prompt_consent_if_needed)
+        self.protocol("WM_DELETE_WINDOW", self._on_close)
 
     # ---------- base ----------
     def _init_styles(self):
@@ -68,6 +69,13 @@ class App(tk.Tk):
     def show(self, name: str):
         self.screens[name].tkraise()
 
+    def _on_close(self):
+        try:
+            self.stop_capture()
+        except Exception:
+            pass
+        self.destroy()
+
     # ---------- consent ----------
     def prompt_consent_if_needed(self):
         if not self.user_consented:
@@ -82,6 +90,9 @@ class App(tk.Tk):
     def start_capture(self, iface: str, bpf: str, on_row_cb):
         if not self.user_consented:
             messagebox.showwarning("Consent required", "Enable consent to start capturing.")
+            return False
+        if not iface:
+            messagebox.showerror("No interface", "Please select a network interface before starting capture.")
             return False
         if self.sniffer:
             return True
@@ -180,7 +191,8 @@ class CaptureScreen(ttk.Frame):
         self.tree.pack(fill=tk.BOTH, expand=True, pady=6)
         yscroll = ttk.Scrollbar(self, orient="vertical", command=self.tree.yview)
         self.tree.configure(yscrollcommand=yscroll.set)
-        yscroll.place(relx=1.0, rely=0.36, relheight=0.56, anchor="ne")
+        yscroll.pack(side=tk.RIGHT, fill=tk.Y)
+
 
         bottom = ttk.Frame(self)
         bottom.pack(fill=tk.X, pady=(10, 0))
@@ -202,16 +214,20 @@ class CaptureScreen(ttk.Frame):
         default = next((i for i in ifs if "NPF_Loopback" in i), (ifs[0] if ifs else ""))
         self.if_var.set(default)
 
-    def _append_row(self, row: List):
+    def _append_row_ui(self, row: List):
         self.app.capture_rows.append(row)
         self.tree.insert("", tk.END, values=row)
         self.status_var.set(f"Rows captured: {len(self.app.capture_rows)}")
+
+    def append_row(self, row: List):
+        # Always schedule UI changes on the Tk main thread
+        self.after(0, self._append_row_ui, row)
 
     def on_start(self):
         ok = self.app.start_capture(
             iface=self.if_var.get().strip(),
             bpf=self.filter_var.get().strip(),
-            on_row_cb=self._append_row,
+            on_row_cb=self.append_row,
         )
         if ok:
             for iid in self.tree.get_children():
@@ -245,16 +261,22 @@ class CaptureScreen(ttk.Frame):
         )
         if not path:
             return
-        export_rows_to_csv(self.app.capture_rows, path)
-        messagebox.showinfo("Exported", f"Saved {len(self.app.capture_rows)} rows to:\n{path}")
+        try:
+            export_rows_to_csv(self.app.capture_rows, path)
+            messagebox.showinfo("Exported", f"Saved {len(self.app.capture_rows)} rows to:\n{path}")
+        except Exception as e:
+            messagebox.showerror("Export failed", str(e))
 
     def on_save(self):
         if not self.app.capture_rows:
             return
         ts = datetime.now().strftime("%Y%m%d_%H%M%S")
         Path("evidence").mkdir(exist_ok=True)
-        export_rows_to_csv(self.app.capture_rows, f"evidence/capture_{ts}.csv")
-        messagebox.showinfo("Saved", "Session saved into evidence/")
+        try:
+            export_rows_to_csv(self.app.capture_rows, f"evidence/capture_{ts}.csv")
+            messagebox.showinfo("Saved", "Session saved into evidence/")
+        except Exception as e:
+            messagebox.showerror("Save failed", str(e))
 
 
 # -------------------- Port Scanner --------------------
@@ -328,14 +350,20 @@ class ScannerScreen(ttk.Frame):
         )
         if not path:
             return
-        export_rows_to_csv(self.app.scan_rows, path)
-        messagebox.showinfo("Exported", f"Saved raw scan rows to:\n{path}")
+        try:
+            export_rows_to_csv(self.app.scan_rows, path)
+            messagebox.showinfo("Exported", f"Saved raw scan rows to:\n{path}")
+        except Exception as e:
+            messagebox.showerror("Export failed", str(e))
 
     def on_save(self):
         ts = datetime.now().strftime("%Y%m%d_%H%M%S")
         Path("evidence").mkdir(exist_ok=True)
-        export_rows_to_csv(self.app.scan_rows, f"evidence/scan_{ts}.csv")
-        messagebox.showinfo("Saved", "Scan rows saved into evidence/")
+        try:
+            export_rows_to_csv(self.app.scan_rows, f"evidence/scan_{ts}.csv")
+            messagebox.showinfo("Saved", "Scan rows saved into evidence/")
+        except Exception as e:
+            messagebox.showerror("Save failed", str(e))
 
 
 # -------------------- Settings --------------------
@@ -357,7 +385,7 @@ class SettingsScreen(ttk.Frame):
         self.consent_var = tk.BooleanVar(value=app.user_consented)
         c1 = ttk.Checkbutton(
             body,
-            text="Enable consent prompts (required for capture & scan)",
+            text="I consent to packet capture and basic port scanning for this session",
             variable=self.consent_var,
             command=self.on_toggle_consent
         )
@@ -388,11 +416,29 @@ class SettingsScreen(ttk.Frame):
     def export_all(self):
         Path("evidence").mkdir(exist_ok=True)
         ts = datetime.now().strftime("%Y%m%d_%H%M%S")
+        ok_any = False
+        errors = []
+
         if self.app.capture_rows:
-            export_rows_to_csv(self.app.capture_rows, f"evidence/all_captures_{ts}.csv")
+            try:
+                export_rows_to_csv(self.app.capture_rows, f"evidence/all_captures_{ts}.csv")
+                ok_any = True
+            except Exception as e:
+                errors.append(f"Captures: {e}")
+
         if self.app.scan_rows:
-            export_rows_to_csv(self.app.scan_rows, f"evidence/all_scans_{ts}.csv")
-        messagebox.showinfo("Exported", "Saved available sessions into evidence/")
+            try:
+                export_rows_to_csv(self.app.scan_rows, f"evidence/all_scans_{ts}.csv")
+                ok_any = True
+            except Exception as e:
+                errors.append(f"Scans: {e}")
+
+        if ok_any and not errors:
+            messagebox.showinfo("Exported", "Saved available sessions into evidence/")
+        elif ok_any and errors:
+            messagebox.showwarning("Partially exported", "\n".join(errors))
+        else:
+            messagebox.showinfo("Nothing to export", "No sessions available or export failed.")
 
     def reset_defaults(self):
         self.app.user_consented = False
