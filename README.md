@@ -72,15 +72,56 @@ python -m app.main scanner
 
 ## 🖼️ Screenshots / Evidence
 
-Include screenshots of:
+All screenshots are stored in the `/screenshots/` folder.  
+These demonstrate the main workflow of the application — from startup consent to exporting data.
 
-- Consent prompt
-- Packet Capture in progress (with a filter, e.g. icmp)
-- Stopped capture showing row count
-- Export dialog success
-- Port Scanner results (localhost quick scan)
+---
 
-Also include exported CSVs from evidence/ as part of submission zip.
+### 🪪 1. Consent Prompt
+![Consent Prompt](screenshots/consent_prompt.png)  
+*Shown on first launch to ensure user consent before any network activity.*
+
+---
+
+### 📡 2. Packet Capture in Progress
+![Packet Capture Running](screenshots/capture_running.png)  
+*Live capture of ICMP packets displayed in the GUI table.*
+
+---
+
+### 🧭 3. Stopped Capture
+![Capture Stopped](screenshots/capture_stopped.png)  
+*Capture stopped with packet summary visible in the table.*
+
+---
+
+### 💾 4. Export Dialog Success
+![Export Success](screenshots/export_success.png)  
+*Export confirmation after saving captured packets to CSV.*
+
+---
+
+### 🔍 5. Port Scanner Results
+![Port Scanner Results](screenshots/port_scan_results.png)  
+*Port scanning results showing open ports detected on localhost.*
+
+---
+
+### ⚙️ 6. Settings & Consent Screen
+![Settings Screen](screenshots/settings_consent.png)  
+*Settings page showing user consent and export controls.*
+
+---
+
+### 📂 7. Evidence Folder View
+![Evidence Folder](screenshots/evidence_folder.png)  
+*Saved CSV exports stored automatically in `/evidence/` for analysis.*
+
+---
+
+### 🌐 8. GitHub Repository Overview
+![GitHub Repository](screenshots/github_repo.png)  
+*Final repository view showing commits, structure, and README preview.*
 
 ---
 
