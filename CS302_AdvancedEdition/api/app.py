@@ -214,7 +214,8 @@ def export_scans_csv():
     )
 
 from visualisation.protocol_stats import compute_protocol_distribution, generate_protocol_chart
-from visualisation.timeline_stats import compute_timeline_distribution, generate_timeline_chart
+from visualisation.timeline_stats import compute_timeline_distribution
+
 
 
 
@@ -247,30 +248,52 @@ def visualise_protocols():
 @app.route("/visualisation/timeline")
 def visualise_timeline():
     """
-    Compute packet counts over time and generate a timeline PNG chart.
-    Returns JSON summary + path to saved image.
+    Return packet counts over time as JSON only.
+
+    This prepares the data for timeline visualisation without
+    generating a PNG chart. The data can be used in external tools
+    or front-end visualisations.
     """
-    limit = request.args.get("limit", 2000)
+    limit = request.args.get("limit", 1000)
     bucket = request.args.get("bucket", "minute")
 
     try:
         limit = int(limit)
     except ValueError:
-        limit = 2000
+        limit = 1000
 
-    chart_path = EVIDENCE_DIR / "packet_timeline.png"
-    saved_file = generate_timeline_chart(chart_path, limit=limit, bucket=bucket)
-    distribution = compute_timeline_distribution(limit=limit, bucket=bucket)
+    try:
+        distribution = compute_timeline_distribution(limit=limit, bucket=bucket)
+        if not distribution:
+            return jsonify(
+                {
+                    "status": "no_data",
+                    "message": "No packet data available for timeline visualisation.",
+                    "bucket": bucket,
+                    "records_used": 0,
+                    "distribution": {},
+                }
+            ), 400
 
-    return jsonify(
-        {
-            "status": "ok",
-            "bucket": bucket,
-            "records_used": sum(distribution.values()),
-            "distribution": distribution,
-            "chart_file": saved_file,
-        }
-    )
+        return jsonify(
+            {
+                "status": "ok",
+                "bucket": bucket,
+                "records_used": sum(distribution.values()),
+                "distribution": distribution,
+            }
+        )
+    except Exception as e:
+        return jsonify(
+            {
+                "status": "error",
+                "message": str(e),
+                "bucket": bucket,
+                "records_used": 0,
+                "distribution": {},
+            }
+        ), 500
+
 
 if __name__ == "__main__":
     # You can change host to "0.0.0.0" if you want to access it from another device.

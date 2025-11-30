@@ -1,14 +1,11 @@
 from collections import Counter
 from datetime import datetime
-from pathlib import Path
 from typing import Dict
-
-import matplotlib.pyplot as plt
 
 from database.db_utils import fetch_packets
 
 
-def compute_timeline_distribution(limit: int = 2000, bucket: str = "minute") -> Dict[str, int]:
+def compute_timeline_distribution(limit: int = 1000, bucket: str = "minute") -> Dict[str, int]:
     """
     Group packets over time and return a mapping of time bucket -> count.
 
@@ -41,29 +38,3 @@ def compute_timeline_distribution(limit: int = 2000, bucket: str = "minute") -> 
     counter = Counter(buckets)
     # Sort by time
     return dict(sorted(counter.items(), key=lambda x: x[0]))
-
-
-def generate_timeline_chart(save_path: Path, limit: int = 2000, bucket: str = "minute") -> str:
-    """
-    Generate a simple line chart showing packets over time.
-    Saves the PNG to save_path.
-    """
-    data = compute_timeline_distribution(limit=limit, bucket=bucket)
-
-    if not data:
-        raise ValueError("No packet data available for timeline visualisation.")
-
-    labels = list(data.keys())
-    counts = list(data.values())
-
-    plt.figure(figsize=(12, 5))
-    plt.plot(labels, counts, marker="o")
-    plt.xticks(rotation=45, ha="right")
-    plt.xlabel("Time")
-    plt.ylabel("Packet count")
-    plt.title(f"Packet Timeline ({bucket}-level buckets)")
-    plt.tight_layout()
-    plt.savefig(save_path, dpi=150)
-    plt.close()
-
-    return str(save_path)
