@@ -213,6 +213,35 @@ def export_scans_csv():
         }
     )
 
+from visualisation.protocol_stats import compute_protocol_distribution, generate_protocol_chart
+
+
+@app.route("/visualisation/protocols")
+def visualise_protocols():
+    """
+    Compute protocol distribution and generate static PNG charts.
+    Returns JSON summary + path to saved image.
+    """
+    limit = request.args.get("limit", 2000)
+
+    try:
+        limit = int(limit)
+    except ValueError:
+        limit = 2000
+
+    chart_path = EVIDENCE_DIR / "protocol_distribution.png"
+    saved_file = generate_protocol_chart(chart_path, limit=limit)
+    distribution = compute_protocol_distribution(limit=limit)
+
+    return jsonify(
+        {
+            "status": "ok",
+            "records_used": sum(distribution.values()),
+            "distribution": distribution,
+            "chart_file": saved_file,
+        }
+    )
+
 if __name__ == "__main__":
     # You can change host to "0.0.0.0" if you want to access it from another device.
     app.run(host="127.0.0.1", port=5000, debug=True)
