@@ -5,6 +5,8 @@ from flask import Flask, jsonify, request
 
 from sniffer.capture_stub import simulate_packet_capture
 from sniffer.live_capture import capture_packets
+from scanner.port_scanner import run_port_scan
+from database.db_utils import fetch_packets, fetch_scans
 
 app = Flask(__name__)
 
@@ -91,6 +93,62 @@ def start_capture():
     )
 
 
+@app.route("/scan", methods=["POST"])
+def scan():
+    """
+    Run a port scan using the python-nmap based scanner.
+
+    JSON body:
+      {
+        "target_host": "127.0.0.1",
+        "ports": "1-1024"
+      }
+    """
+    data = request.get_json(silent=True) or {}
+    target_host = data.get("target_host", "127.0.0.1")
+    ports = data.get("ports", "1-1024")
+
+    results = run_port_scan(target_host=target_host, ports=ports)
+
+    return jsonify(
+        {
+            "status": "scan_completed",
+            "target_host": target_host,
+            "total_results": len(results),
+            "results": results,
+        }
+    )
+
+
+@app.route("/packets")
+def list_packets():
+    """
+    Return recent packet metadata as JSON.
+    """
+    try:
+        limit = int(request.args.get("limit", 200))
+    except ValueError:
+        limit = 200
+
+    packets = fetch_packets(limit=limit)
+    return jsonify({"count": len(packets), "packets": packets})
+
+
+@app.route("/scans")
+def list_scans():
+    """
+    Return recent port scan results as JSON.
+    """
+    try:
+        limit = int(request.args.get("limit", 100))
+    except ValueError:
+        limit = 100
+
+    scans = fetch_scans(limit=limit)
+    return jsonify({"count": len(scans), "scans": scans})
+
+
 if __name__ == "__main__":
     # You can change host to "0.0.0.0" if you want to access it from another device.
     app.run(host="127.0.0.1", port=5000, debug=True)
+
