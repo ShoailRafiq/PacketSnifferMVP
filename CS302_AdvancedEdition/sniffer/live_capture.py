@@ -3,7 +3,7 @@ from typing import Optional
 
 from scapy.all import sniff, IP, TCP, UDP, ICMP  # type: ignore
 
-from CS302_AdvancedEdition.database.db_utils import log_packet
+from database.db_utils import log_packet
 
 
 def _get_protocol(pkt) -> str:

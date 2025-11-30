@@ -1,0 +1,72 @@
+### CS302 Advanced Edition – API Tests
+### Use these with the PyCharm HTTP Client while api.app is running.
+### Server: http://127.0.0.1:5000
+###############################################################
+
+### 1. API status
+GET http://127.0.0.1:5000/
+
+###
+
+### 2. Health check
+GET http://127.0.0.1:5000/health
+
+###############################################################
+### CAPTURE ENDPOINTS
+###############################################################
+
+### 3. Stub capture (uses simulate_packet_capture)
+### Logs 5 dummy packets to the database.
+GET http://127.0.0.1:5000/start_capture_stub
+
+###
+
+### 4. Live capture (Scapy)
+### Captures real packets for the given duration.
+POST http://127.0.0.1:5000/start_capture
+Content-Type: application/json
+
+{
+  "duration_seconds": 5,
+  "packet_limit": null,
+  "iface": null
+}
+
+###############################################################
+### PORT SCAN ENDPOINT
+###############################################################
+
+### 5. Port scan (python-nmap)
+### Scans the given host and port range and logs results into the 'scans' table.
+### NOTE: This will work once the /scan endpoint is wired into the API.
+POST http://127.0.0.1:5000/scan
+Content-Type: application/json
+
+{
+  "target_host": "127.0.0.1",
+  "ports": "1-1024"
+}
+
+###############################################################
+### DATA BROWSING (ONCE IMPLEMENTED)
+###############################################################
+
+### 6. List recent packets (JSON)
+GET http://127.0.0.1:5000/packets?limit=50
+
+###
+
+### 7. List recent scans (JSON)
+GET http://127.0.0.1:5000/scans?limit=50
+
+###############################################################
+### EXPORTS (CSV DOWNLOADS – ONCE IMPLEMENTED)
+###############################################################
+
+### 8. Export packets to CSV
+GET http://127.0.0.1:5000/export/packets
+
+###
+
+### 9. Export scans to CSV
+GET http://127.0.0.1:5000/export/scans
