@@ -214,6 +214,8 @@ def export_scans_csv():
     )
 
 from visualisation.protocol_stats import compute_protocol_distribution, generate_protocol_chart
+from visualisation.timeline_stats import compute_timeline_distribution, generate_timeline_chart
+
 
 
 @app.route("/visualisation/protocols")
@@ -236,6 +238,34 @@ def visualise_protocols():
     return jsonify(
         {
             "status": "ok",
+            "records_used": sum(distribution.values()),
+            "distribution": distribution,
+            "chart_file": saved_file,
+        }
+    )
+
+@app.route("/visualisation/timeline")
+def visualise_timeline():
+    """
+    Compute packet counts over time and generate a timeline PNG chart.
+    Returns JSON summary + path to saved image.
+    """
+    limit = request.args.get("limit", 2000)
+    bucket = request.args.get("bucket", "minute")
+
+    try:
+        limit = int(limit)
+    except ValueError:
+        limit = 2000
+
+    chart_path = EVIDENCE_DIR / "packet_timeline.png"
+    saved_file = generate_timeline_chart(chart_path, limit=limit, bucket=bucket)
+    distribution = compute_timeline_distribution(limit=limit, bucket=bucket)
+
+    return jsonify(
+        {
+            "status": "ok",
+            "bucket": bucket,
             "records_used": sum(distribution.values()),
             "distribution": distribution,
             "chart_file": saved_file,
