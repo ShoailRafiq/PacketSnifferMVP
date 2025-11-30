@@ -147,6 +147,71 @@ def list_scans():
     scans = fetch_scans(limit=limit)
     return jsonify({"count": len(scans), "scans": scans})
 
+@app.route("/export/packets")
+def export_packets_csv():
+    """
+    Export all packets from the database to a CSV file and return it for download.
+    """
+    import csv
+    packets = fetch_packets(limit=5000)  # big enough for our purposes
+
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    out_path = EVIDENCE_DIR / f"packets_export_{timestamp}.csv"
+
+    with open(out_path, mode="w", newline="", encoding="utf-8") as f:
+        writer = csv.writer(f)
+        writer.writerow(["timestamp", "src_ip", "dst_ip", "protocol", "length"])
+
+        for pkt in packets:
+            writer.writerow([
+                pkt.get("timestamp"),
+                pkt.get("src_ip"),
+                pkt.get("dst_ip"),
+                pkt.get("protocol"),
+                pkt.get("length"),
+            ])
+
+    return jsonify(
+        {
+            "status": "export_complete",
+            "file": str(out_path),
+            "records_exported": len(packets),
+        }
+    )
+
+
+@app.route("/export/scans")
+def export_scans_csv():
+    """
+    Export port scan results as a CSV file and return it for download.
+    """
+    import csv
+    scans = fetch_scans(limit=5000)
+
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    out_path = EVIDENCE_DIR / f"scans_export_{timestamp}.csv"
+
+    with open(out_path, mode="w", newline="", encoding="utf-8") as f:
+        writer = csv.writer(f)
+        writer.writerow(["timestamp", "target_host", "port", "state", "service", "vulnerable"])
+
+        for entry in scans:
+            writer.writerow([
+                entry.get("timestamp"),
+                entry.get("target_host"),
+                entry.get("port"),
+                entry.get("state"),
+                entry.get("service"),
+                entry.get("vulnerable"),
+            ])
+
+    return jsonify(
+        {
+            "status": "export_complete",
+            "file": str(out_path),
+            "records_exported": len(scans),
+        }
+    )
 
 if __name__ == "__main__":
     # You can change host to "0.0.0.0" if you want to access it from another device.
