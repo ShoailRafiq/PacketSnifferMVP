@@ -1,4 +1,27 @@
 ### CS302 Advanced Edition – API Tests
+###############################################################
+#  CS302 Advanced Edition – API Test Suite (PyCharm HTTP Client)
+# -------------------------------------------------------------
+# HOW TO RUN THE API SERVER:
+#
+# 1. Open PyCharm Terminal
+# 2. Run the following commands:
+#
+#    cd C:\Projects\PacketSnifferMVP\CS302_AdvancedEdition
+#    python -m api.app
+#
+# 3. Leave the server running (you will see "Running on 127.0.0.1:5000")
+#
+# 4. In this api_tests.http file, click the green ► icons next to each request
+#    to run API calls directly from PyCharm.
+#
+# NOTE:
+#  - Live capture requires admin/WinPcap permissions.
+#  - Port scanning requires Nmap installed + python-nmap module.
+#  - Export and visualisation endpoints will generate files under:
+#       CS302_AdvancedEdition/evidence/
+###############################################################
+
 ### Use these with the PyCharm HTTP Client while api.app is running.
 ### Server: http://127.0.0.1:5000
 ###############################################################
@@ -70,3 +93,13 @@ GET http://127.0.0.1:5000/export/packets
 
 ### 9. Export scans to CSV
 GET http://127.0.0.1:5000/export/scans
+
+###############################################################
+### VISUALISATION ENDPOINTS
+###############################################################
+
+### 10. Protocol distribution visualisation (JSON + PNG)
+GET http://127.0.0.1:5000/visualisation/protocols?limit=500
+
+### 11. Packet timeline visualisation (JSON + PNG)
+GET http://127.0.0.1:5000/visualisation/timeline?limit=500&bucket=minute
