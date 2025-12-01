@@ -8,3 +8,9 @@ __pycache__/
 # Evidence exports
 evidence/
 app/evidence/
+
+# Local SQLite database
+CS302_AdvancedEdition/database/sniffer.db
+
+# IDE files (PyCharm)
+.idea/
